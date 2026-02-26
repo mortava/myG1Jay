@@ -15,22 +15,25 @@
       const WHITE_LABEL = {
         // Brand name (split into two parts for two-tone logo)
         brandPart1:     "Carol",              // Bold magenta/pink
-        brandPart2:     "AI Assistant",       // Lighter purple
+        brandPart2:     "AI Agent",           // Lighter gray
+
+        // "powered by" text (right-aligned next to brand)
+        poweredBy:      "powered by The G1 Group",
 
         // Page title (browser tab)
-        pageTitle:      "Carol AI Assistant",
+        pageTitle:      "Carol AI Agent",
 
         // Tagline below the chat input
-        taglineLeft:    "Need Help? Jay Beach | 901.289.0344",
-        taglineRight:   "BUILT BY G1 GROUP | Portal Access",
+        taglineLeft:    "Need Help? \u2192 Jay Beach +1-901-289-0344",
+        taglineRight:   "g1wins.com",
         taglineLink:    "https://g1wins.com",
         copyright:      "\u00A9 OpenBroker Labs",
 
         // Disclaimer
-        disclaimer:     "This AI Tool is not a part of the above mentioned mortgage professional's Company, nothing provided by this tool is any type of commitment to lend or arrange any type of loan. AI can make mistakes. Check important info. Intended for information use only.",
+        disclaimer:     "This AI tool is not affiliated with the above mortgage professional\u2019s company and does not offer or commit to lend. AI may make mistakes. For informational purposes only.",
 
         // Input placeholder
-        placeholder:    "Ask me anything about your mortgage...",
+        placeholder:    "Ask me anything about NonQM Loans...",
 
         // Accent colors
         accentColor:    "#C084FC",        // Light purple for brandPart2
@@ -657,6 +660,13 @@
         flex-shrink: 0;
       }
 
+      .brand-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
       .brand-logo {
         font-size: 28px;
         font-weight: 800;
@@ -670,6 +680,14 @@
 
       .brand-logo .part2 {
         color: var(--accent-brand, #9CA3AF);
+        font-weight: 400;
+      }
+
+      .powered-by {
+        font-size: 14px;
+        color: #B0B0B0;
+        font-weight: 400;
+        white-space: nowrap;
       }
 
       /* ── Gradient top bar ── */
@@ -694,14 +712,14 @@
       }
 
       .brand-tagline .built-for {
-        font-size: 15px;
+        font-size: 14px;
         color: var(--text-secondary);
         font-weight: 400;
       }
 
       .brand-tagline .built-for .name {
         color: var(--text-primary);
-        font-weight: 700;
+        font-weight: 600;
       }
 
       .brand-tagline .visit-link {
@@ -715,16 +733,19 @@
         color: var(--text-primary);
       }
 
+      .brand-disclaimer {
+        font-size: 11px;
+        color: #B0B0B0;
+        line-height: 1.5;
+        text-align: center;
+        font-style: italic;
+      }
+
       .brand-copyright {
         font-size: 11px;
         color: var(--text-secondary);
-        margin-top: 2px;
-      }
-
-      .brand-disclaimer {
-        font-size: 11px;
-        color: var(--text-secondary);
-        line-height: 1.5;
+        text-align: center;
+        margin-top: 4px;
       }
 
       /* ── White Label: Brand Footer (docked mode) ── */
@@ -741,7 +762,7 @@
 
       .chat-widget.centered .brand-header-inline {
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
       }
 
       .chat-widget:not(.centered) .brand-header-inline {
@@ -768,8 +789,11 @@
 
       <!-- Brand Header (visible after chat starts, pinned to top) -->
       <div class="brand-header" id="brandHeader">
-        <div class="brand-logo">
-          <span class="part1" id="brandPart1"></span> <span class="part2" id="brandPart2"></span>
+        <div class="brand-row">
+          <div class="brand-logo">
+            <span class="part1" id="brandPart1"></span> <span class="part2" id="brandPart2"></span>
+          </div>
+          <span class="powered-by" id="poweredByHeader"></span>
         </div>
       </div>
 
@@ -782,10 +806,13 @@
 
       <!-- Input Zone (floats center initially, docks to bottom on chat start) -->
       <div class="input-zone" id="inputZone">
-        <!-- Inline brand logo (visible only in centered/pre-chat state) -->
+        <!-- Inline brand row (visible only in centered/pre-chat state) -->
         <div class="brand-header-inline" id="brandHeaderInline">
-          <div class="brand-logo">
-            <span class="part1" id="brandPart1Inline"></span> <span class="part2" id="brandPart2Inline"></span>
+          <div class="brand-row">
+            <div class="brand-logo">
+              <span class="part1" id="brandPart1Inline"></span> <span class="part2" id="brandPart2Inline"></span>
+            </div>
+            <span class="powered-by" id="poweredByInline"></span>
           </div>
         </div>
         <form class="input-container" id="inputForm" autocomplete="off" role="form" aria-label="Send a message">
@@ -819,26 +846,22 @@
         <!-- Tagline + Disclaimer (inside input zone so it centers with input) -->
         <div class="brand-tagline-block" id="brandTaglineBlock">
           <div class="brand-tagline">
-            <div>
-              <span class="built-for" id="builtFor"></span>
-              <div class="brand-copyright" id="brandCopyright"></div>
-            </div>
+            <span class="built-for" id="builtFor"></span>
             <a class="visit-link" id="visitLink" href="#" target="_blank" rel="noopener"></a>
           </div>
           <div class="brand-disclaimer" id="brandDisclaimer"></div>
+          <div class="brand-copyright" id="brandCopyright"></div>
         </div>
       </div>
 
       <!-- Brand Footer: Tagline + Disclaimer (visible in docked/chat mode) -->
       <div class="brand-footer" id="brandFooter">
         <div class="brand-tagline">
-          <div>
-            <span class="built-for" id="builtForDocked"></span>
-            <div class="brand-copyright" id="brandCopyrightDocked"></div>
-          </div>
+          <span class="built-for" id="builtForDocked"></span>
           <a class="visit-link" id="visitLinkDocked" href="#" target="_blank" rel="noopener"></a>
         </div>
         <div class="brand-disclaimer" id="brandDisclaimerDocked"></div>
+        <div class="brand-copyright" id="brandCopyrightDocked"></div>
       </div>
     </div>
 
@@ -1222,6 +1245,12 @@
           document.getElementById('brandPart1Inline').textContent = wl.brandPart1;
           document.getElementById('brandPart2Inline').textContent = wl.brandPart2;
 
+          // Powered by text
+          if (wl.poweredBy) {
+            document.getElementById('poweredByInline').textContent = wl.poweredBy;
+            document.getElementById('poweredByHeader').textContent = wl.poweredBy;
+          }
+
           // Brand colors
           document.documentElement.style.setProperty('--accent-brand', wl.accentColor);
           if (wl.brandColor) {
@@ -1232,12 +1261,12 @@
           inputField.placeholder = wl.placeholder;
 
           // Tagline — left side text
-          const leftText = wl.taglineLeft || ('AI Assistant to ' + (wl.taglineName || ''));
+          const leftText = wl.taglineLeft || '';
           document.getElementById('builtFor').textContent = leftText;
           document.getElementById('builtForDocked').textContent = leftText;
 
-          // Tagline — right side link with arrow
-          const rightText = (wl.taglineRight || wl.taglineLinkText || '') + ' \u203A';
+          // Tagline — right side link
+          const rightText = (wl.taglineRight || '') + ' \u203A';
           const setLink = (el) => { el.href = wl.taglineLink; el.textContent = rightText; };
           setLink(document.getElementById('visitLink'));
           setLink(document.getElementById('visitLinkDocked'));
