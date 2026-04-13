@@ -12,7 +12,7 @@ app.use(express.static(path.join(__dirname)));
 
 // Proxy endpoint
 app.post('/api/chat', async (req, res) => {
-    const API_URL = 'https://grow.g1wins.com/api/pricing-engine/ai/chat?public=true';
+    const API_URL = 'https://tql-broker-ai-chat-1094393703267.us-central1.run.app/';
 
     try {
         const response = await fetch(API_URL, {
