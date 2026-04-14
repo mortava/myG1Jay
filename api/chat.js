@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const API_URL = 'https://tql-broker-ai-chat-1094393703267.us-central1.run.app/';
+    const API_URL = 'https://tql-broker-ai-chat-1094393703267.us-central1.run.app/api/chat';
 
     try {
         const response = await fetch(API_URL, {
