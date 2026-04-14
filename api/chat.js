@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 
-const API_BASE = 'https://tql-broker-ai-chat-1094393703267.us-central1.run.app';
+const API_BASE = 'https://tql-broker-ai-chat-hpcz4nbaaq-uc.a.run.app';
 
 module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
