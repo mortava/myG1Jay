@@ -29,7 +29,23 @@ module.exports = async (req, res) => {
             headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
             body: JSON.stringify({ session_id: sessionId, message })
         });
-        await streamResp.text();
+        const streamText = await streamResp.text();
+
+        // Parse SSE for an error event so we surface the real upstream failure
+        for (const line of streamText.split('\n')) {
+            if (!line.startsWith('data:')) continue;
+            try {
+                const evt = JSON.parse(line.slice(5).trim());
+                if (evt.event === 'error' && evt.error) {
+                    console.error('Upstream stream error:', evt.error);
+                    return res.status(502).json({
+                        error: 'Upstream AI error',
+                        message: evt.error,
+                        sessionId
+                    });
+                }
+            } catch {}
+        }
 
         const pollSession = async () => {
             const r = await fetch(`${API_BASE}/api/backend/ai/chat/sessions/${sessionId}`);
