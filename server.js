@@ -5,45 +5,65 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const API_BASE = 'https://tql-broker-ai-chat-1094393703267.us-central1.run.app';
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// Proxy endpoint
 app.post('/api/chat', async (req, res) => {
-    const API_URL = 'https://tql-broker-ai-chat-1094393703267.us-central1.run.app/api/chat';
+    const message = (req.body && (req.body.message || req.body.content)) || '';
+    let sessionId = req.body && req.body.sessionId;
 
     try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'User-Agent': 'obagent1/1.0'
-            },
-            body: JSON.stringify(req.body)
-        });
+        if (!sessionId) {
+            const sessResp = await fetch(`${API_BASE}/api/backend/ai/chat/sessions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const sessData = await sessResp.json();
+            sessionId = sessData.id;
+        }
 
-        const data = await response.json();
-        res.json(data);
+        const streamResp = await fetch(`${API_BASE}/api/backend/ai/chat/messages/stream`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+            body: JSON.stringify({ session_id: sessionId, message })
+        });
+        await streamResp.text();
+
+        let reply = '';
+        let references = [];
+        const start = Date.now();
+        while (Date.now() - start < 55000) {
+            const r = await fetch(`${API_BASE}/api/backend/ai/chat/sessions/${sessionId}`);
+            const data = await r.json();
+            const msgs = data.messages || [];
+            const lastAssistant = [...msgs].reverse().find(m => m.role === 'assistant');
+            if (lastAssistant && lastAssistant.content) {
+                reply = lastAssistant.content;
+                references = lastAssistant.references || [];
+                break;
+            }
+            await new Promise(r => setTimeout(r, 1500));
+        }
+
+        if (!reply) return res.status(504).json({ error: 'Timeout', sessionId });
+        res.json({ reply, message: reply, response: reply, sessionId, references });
     } catch (error) {
         console.error('Proxy error:', error.message);
-        res.status(500).json({
-            error: 'Proxy request failed',
-            message: error.message
-        });
+        res.status(500).json({ error: 'Proxy request failed', message: error.message });
     }
 });
 
-// Health check
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', service: 'obagent1' });
+    res.json({ status: 'ok', service: 'quinn-ai-agent' });
 });
 
 if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => {
-        console.log(`obagent1 running at http://localhost:${PORT}`);
+        console.log(`quinn running at http://localhost:${PORT}`);
     });
 }
 

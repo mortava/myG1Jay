@@ -25,7 +25,7 @@
 
         // Tagline below the chat input
         taglineLeft:    "Need Help? \u2192 Jay Beach +1-901-289-0344",
-        taglineRight:   "g1wins.com",
+        taglineRight:   "tqltpo.com",
         taglineLink:    "https://tqltpo.com",
         copyright:      "\u00A9 OpenBroker Labs",
 
@@ -1164,6 +1164,7 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 message: text,
+                sessionId: window.__chatSessionId || null,
                 conversationHistory: conversationHistory,
                 lastFormValues: {},
                 enableCaching: true
@@ -1173,7 +1174,8 @@
             if (!res.ok) throw new Error('Request failed (' + res.status + ')');
 
             const data = await res.json();
-            const responseText = data.response || data.message || JSON.stringify(data);
+            if (data.sessionId) window.__chatSessionId = data.sessionId;
+            const responseText = data.reply || data.response || data.message || JSON.stringify(data);
 
             conversationHistory.push({ role: 'assistant', content: responseText });
             addMessage('assistant', responseText);
@@ -1285,7 +1287,7 @@
         // Notify parent frame the widget is ready
         try {
           if (window.parent !== window) {
-            window.parent.postMessage({ type: 'g1-widget-ready' }, '*');
+            window.parent.postMessage({ type: 'tql-widget-ready' }, '*');
           }
         } catch (e) { /* cross-origin, ignore */ }
 

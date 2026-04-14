@@ -1,39 +1,63 @@
 const fetch = require('node-fetch');
 
+const API_BASE = 'https://tql-broker-ai-chat-1094393703267.us-central1.run.app';
+
 module.exports = async (req, res) => {
-    // CORS headers - allow embedding from any origin
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    const API_URL = 'https://tql-broker-ai-chat-1094393703267.us-central1.run.app/api/chat';
+    const message = (req.body && (req.body.message || req.body.content)) || '';
+    let sessionId = req.body && req.body.sessionId;
 
     try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'User-Agent': 'obagent1/1.0'
-            },
-            body: JSON.stringify(req.body)
-        });
+        if (!sessionId) {
+            const sessResp = await fetch(`${API_BASE}/api/backend/ai/chat/sessions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const sessData = await sessResp.json();
+            sessionId = sessData.id;
+        }
 
-        const data = await response.json();
-        res.json(data);
+        const streamResp = await fetch(`${API_BASE}/api/backend/ai/chat/messages/stream`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+            body: JSON.stringify({ session_id: sessionId, message })
+        });
+        await streamResp.text();
+
+        const pollSession = async () => {
+            const r = await fetch(`${API_BASE}/api/backend/ai/chat/sessions/${sessionId}`);
+            return r.json();
+        };
+
+        let reply = '';
+        let references = [];
+        const start = Date.now();
+        while (Date.now() - start < 55000) {
+            const data = await pollSession();
+            const msgs = data.messages || [];
+            const lastAssistant = [...msgs].reverse().find(m => m.role === 'assistant');
+            if (lastAssistant && lastAssistant.content) {
+                reply = lastAssistant.content;
+                references = lastAssistant.references || [];
+                break;
+            }
+            await new Promise(r => setTimeout(r, 1500));
+        }
+
+        if (!reply) {
+            return res.status(504).json({ error: 'Timeout waiting for assistant reply', sessionId });
+        }
+
+        res.json({ reply, message: reply, response: reply, sessionId, references });
     } catch (error) {
         console.error('Proxy error:', error.message);
-        res.status(500).json({
-            error: 'Proxy request failed',
-            message: error.message
-        });
+        res.status(500).json({ error: 'Proxy request failed', message: error.message });
     }
 };
